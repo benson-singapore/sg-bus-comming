@@ -2,7 +2,7 @@
 @import "nprogress/nprogress.css";
 
 :root {
-  --background: #ffffff;
+  --background: #f1f5f9;
   --foreground: #171717;
 }
 
@@ -13,11 +13,10 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  background: #f1f5f9;
+  min-height: 100%;
 }
 
 body {

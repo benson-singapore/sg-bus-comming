@@ -9,6 +9,7 @@ import {
   Loader2,
   MapPin,
   Navigation2,
+  Signpost,
   Pencil,
   Plus,
   RotateCw,
@@ -267,16 +268,17 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50/60 via-slate-50 to-slate-100 text-slate-800 pb-28 selection:bg-emerald-100">
-      <header className="z-20 bg-white/60 backdrop-blur-md">
-        <div className="rounded-b-[40px] border-b border-white/20 bg-gradient-to-r from-emerald-500 to-green-400 text-white shadow-lg shadow-emerald-900/10">
-          <div className="mx-auto flex max-w-md items-center justify-between px-6 py-5">
+    <div className="min-h-screen bg-slate-100 text-slate-800 pb-[calc(env(safe-area-inset-bottom)+7.5rem)] selection:bg-emerald-100">
+      <header className="z-20 bg-slate-100">
+        <div className="h-[env(safe-area-inset-top)] bg-slate-100" />
+        <div className="px-4 pb-3">
+          <div className="mx-auto flex max-w-md items-center justify-between rounded-[28px] bg-transparent px-5 py-4 text-emerald-700">
             <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center rounded-2xl border border-emerald-100 bg-white p-2 shadow-sm">
-                <Bus className="h-6 w-6 text-emerald-500" />
+              <div className="flex items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-green-400 p-2 shadow-sm shadow-emerald-200/80">
+                <Bus className="h-6 w-6 text-white" />
               </div>
               <div className="flex flex-col">
-                <h1 className="flex items-baseline text-2xl leading-none font-black tracking-tight">
+                <h1 className="flex items-baseline text-[30px] leading-none font-black tracking-tight">
                   <span>{t.appTitle}</span>
                 </h1>
               </div>
@@ -288,9 +290,9 @@ export default function Home() {
                   setLang(next);
                   saveLang(next);
                 }}
-                className="rounded-2xl border border-white/10 bg-white/10 p-3 transition-all hover:bg-white/20"
+                className="rounded-2xl bg-transparent p-3 text-emerald-600 transition-all hover:bg-emerald-100/50"
               >
-                <Languages size={18} className="text-white" />
+                <Languages size={18} className="text-emerald-600" />
               </button>
             </div>
           </div>
@@ -348,7 +350,10 @@ export default function Home() {
         )}
       </main>
 
-      <div className="fixed right-0 bottom-2 left-0 z-30 px-6">
+      <div
+        className="fixed right-0 left-0 z-30 px-6"
+        style={{ bottom: "calc(env(safe-area-inset-bottom) + 0.5rem)" }}
+      >
         <nav className="mx-auto flex max-w-md items-center justify-around rounded-[32px] border border-slate-200 bg-white/95 px-3 py-2 shadow-[0_8px_40px_rgba(0,0,0,0.08)] backdrop-blur-xl">
           <NavButton
             active={activeTab === "home"}
@@ -450,7 +455,7 @@ function HomeView({
     <div className="animate-in fade-in slide-in-from-bottom-4 space-y-5 duration-500">
       <div className="flex items-center justify-between px-1">
         <h2 className="flex items-center gap-2 text-lg font-black tracking-tight text-slate-800">
-          <Navigation2 size={18} className="fill-emerald-500 text-emerald-500" />
+          <Signpost size={18} className="text-emerald-500" />
           {t.hallTitle}
         </h2>
       </div>

@@ -4,7 +4,7 @@ export const LANG_STORAGE_KEY = "sg-bus-coming:lang";
 
 export const dictionary = {
   zh: {
-    appTitle: "SG 公交出行",
+    appTitle: "BUS COMMING",
     tabArrivals: "到站",
     tabDiscover: "发现",
     tabManage: "管理",
@@ -43,7 +43,7 @@ export const dictionary = {
     realtimeStatus: "实时状态",
   },
   en: {
-    appTitle: "SG Bus Coming",
+    appTitle: "BUS COMMING",
     tabArrivals: "Arrivals",
     tabDiscover: "Discover",
     tabManage: "Manage",
