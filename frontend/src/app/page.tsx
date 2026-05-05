@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Bus,
   Clock,
+  Download,
   Languages,
   Loader2,
   MapPin,
@@ -51,6 +52,12 @@ type TabKey = "home" | "query" | "manage";
 type CachedArrivalMap = Record<string, QueryResult>;
 const STATIONS_STORAGE_KEY = "sg-bus-coming:stations";
 const ARRIVAL_CACHE_KEY = "sg-bus-coming:arrival-cache";
+const PWA_INSTALLED_MARK_KEY = "sg-bus-coming:pwa-installed";
+
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform?: string }>;
+};
 
 const normalizeRouteKey = (route: string) => route.replace("路", "").trim().toUpperCase();
 
@@ -350,6 +357,8 @@ export default function Home() {
         )}
       </main>
 
+      <PwaInstallEntry t={t} />
+
       <div
         className="fixed right-0 left-0 z-30 px-6"
         style={{ bottom: "calc(env(safe-area-inset-bottom) + 0.5rem)" }}
@@ -396,6 +405,126 @@ export default function Home() {
         />
       )}
     </div>
+  );
+}
+
+function PwaInstallEntry({ t }: { t: I18nText }) {
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalling, setIsInstalling] = useState(false);
+  const [showIosSheet, setShowIosSheet] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  const isIosDevice = useCallback(() => {
+    if (typeof navigator === "undefined") return false;
+    const ua = navigator.userAgent || "";
+    const iOS = /iPad|iPhone|iPod/.test(ua);
+    const iPadOS13Plus =
+      navigator.platform === "MacIntel" &&
+      typeof (navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints === "number" &&
+      ((navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints ?? 0) > 1;
+    return iOS || iPadOS13Plus;
+  }, []);
+
+  useEffect(() => {
+    const checkStandalone = () => {
+      const displayModeStandalone = Boolean(window.matchMedia?.("(display-mode: standalone)")?.matches);
+      const iosStandalone = Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+      setIsStandalone(displayModeStandalone || iosStandalone);
+    };
+
+    checkStandalone();
+    window.addEventListener("resize", checkStandalone);
+    return () => window.removeEventListener("resize", checkStandalone);
+  }, []);
+
+  useEffect(() => {
+    const onBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    };
+
+    const onAppInstalled = () => {
+      setDeferredPrompt(null);
+      localStorage.setItem(PWA_INSTALLED_MARK_KEY, "1");
+      setIsStandalone(true);
+    };
+
+    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+    window.addEventListener("appinstalled", onAppInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", onAppInstalled);
+    };
+  }, []);
+
+  if (isStandalone) return null;
+  if (typeof window !== "undefined" && localStorage.getItem(PWA_INSTALLED_MARK_KEY) === "1") return null;
+
+  const ios = isIosDevice();
+  const canInstall = ios || Boolean(deferredPrompt);
+  if (!canInstall) return null;
+
+  const onInstall = async () => {
+    if (ios) {
+      setShowIosSheet(true);
+      return;
+    }
+    if (!deferredPrompt) return;
+    setIsInstalling(true);
+    try {
+      await deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice.catch(() => null);
+      if (choice?.outcome === "accepted") {
+        localStorage.setItem(PWA_INSTALLED_MARK_KEY, "1");
+      }
+    } finally {
+      setDeferredPrompt(null);
+      setIsInstalling(false);
+    }
+  };
+
+  return (
+    <>
+      <div
+        className="fixed right-0 left-0 z-20 px-6"
+        style={{ bottom: "calc(env(safe-area-inset-bottom) + 5.6rem)" }}
+      >
+        <div className="mx-auto max-w-md">
+          <button
+            onClick={() => void onInstall()}
+            disabled={isInstalling}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-emerald-200 transition-all active:scale-[0.99] disabled:opacity-70"
+          >
+            <Download size={16} />
+            <span>{isInstalling ? t.installing : t.installApp}</span>
+          </button>
+          <p className="mt-2 px-2 text-center text-[11px] font-bold text-slate-400">
+            {ios ? t.installHintIosStep1 : t.installHintAndroid}
+          </p>
+        </div>
+      </div>
+
+      {showIosSheet && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/55 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-t-3xl bg-white px-5 pt-5 pb-7 shadow-2xl">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-black text-slate-800">{t.installHintIosTitle}</h3>
+              <button
+                onClick={() => setShowIosSheet(false)}
+                className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500"
+              >
+                {t.close}
+              </button>
+            </div>
+            <ol className="space-y-2 text-sm font-bold text-slate-600">
+              <li>1. {t.installHintIosStep1}</li>
+              <li>2. {t.installHintIosStep2}</li>
+              <li>3. {t.installHintIosStep3}</li>
+            </ol>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

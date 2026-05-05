@@ -4,7 +4,7 @@ export const LANG_STORAGE_KEY = "sg-bus-coming:lang";
 
 export const dictionary = {
   zh: {
-    appTitle: "BUS COMMING",
+    appTitle: "巴士来了",
     tabArrivals: "到站",
     tabDiscover: "发现",
     tabManage: "管理",
@@ -41,6 +41,15 @@ export const dictionary = {
     statusComing: "即将到站",
     gpsTime: "GPS定位",
     realtimeStatus: "实时状态",
+    installApp: "安装应用",
+    installing: "安装中...",
+    installUnavailable: "当前环境暂不支持安装",
+    installHintAndroid: "推荐添加到主屏幕，便于快速打开",
+    installHintIosTitle: "iPhone 安装指引",
+    installHintIosStep1: "请使用 Safari 打开当前页面",
+    installHintIosStep2: "点击底部“分享”按钮",
+    installHintIosStep3: "选择“添加到主屏幕”并确认",
+    close: "关闭",
   },
   en: {
     appTitle: "BUS COMMING",
@@ -80,6 +89,15 @@ export const dictionary = {
     statusComing: "On the way",
     gpsTime: "GPS",
     realtimeStatus: "Live",
+    installApp: "Install App",
+    installing: "Installing...",
+    installUnavailable: "Install is not available in this environment",
+    installHintAndroid: "Add to home screen for quicker access",
+    installHintIosTitle: "iPhone Install Guide",
+    installHintIosStep1: "Open this page with Safari",
+    installHintIosStep2: 'Tap the "Share" button at the bottom',
+    installHintIosStep3: 'Choose "Add to Home Screen" and confirm',
+    close: "Close",
   },
 } as const;
 
