@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const runtime = "edge";
+
 type ArrivelahETA = {
   time?: string;
   duration_ms?: number;
