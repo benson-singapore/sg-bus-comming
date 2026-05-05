@@ -1,6 +1,5 @@
 "use client";
 
-import NProgress from "nprogress";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Bus,
@@ -106,27 +105,9 @@ export default function Home() {
     routes: "",
   });
   const [editingStationId, setEditingStationId] = useState<string | null>(null);
-  const [pendingRequests, setPendingRequests] = useState(0);
-
-  useEffect(() => {
-    NProgress.configure({ showSpinner: false, trickleSpeed: 120, minimum: 0.08 });
-  }, []);
-
-  useEffect(() => {
-    if (pendingRequests > 0) {
-      NProgress.start();
-    } else {
-      NProgress.done();
-    }
-  }, [pendingRequests]);
 
   const progressFetch = useCallback(async (input: RequestInfo | URL, init?: RequestInit) => {
-    setPendingRequests((n) => n + 1);
-    try {
-      return await fetch(input, init);
-    } finally {
-      setPendingRequests((n) => Math.max(0, n - 1));
-    }
+    return fetch(input, init);
   }, []);
   const [arrivalCache, setArrivalCache] = useState<CachedArrivalMap>(() => {
     if (typeof window === "undefined") return {};
@@ -279,7 +260,7 @@ export default function Home() {
       <header className="z-20 bg-slate-100">
         <div className="h-[env(safe-area-inset-top)] bg-slate-100" />
         <div className="px-4 pb-3">
-          <div className="mx-auto flex max-w-md items-center justify-between rounded-[28px] bg-transparent px-5 py-4 text-emerald-700">
+          <div className="mx-auto flex max-w-md items-center justify-between rounded-[28px] bg-transparent px-0 py-4 text-emerald-700">
             <div className="flex items-center gap-4">
               <div className="flex items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-green-400 p-2 shadow-sm shadow-emerald-200/80">
                 <Bus className="h-6 w-6 text-white" />
@@ -357,7 +338,7 @@ export default function Home() {
         )}
       </main>
 
-      <PwaInstallEntry t={t} />
+      {activeTab === "manage" && <PwaInstallEntry t={t} />}
 
       <div
         className="fixed right-0 left-0 z-30 px-6"
@@ -926,23 +907,23 @@ function QueryView({
     <div className="animate-in fade-in slide-in-from-left-4 space-y-5 duration-500">
       <h2 className="px-1 text-lg font-black text-slate-800">{t.searchCityTitle}</h2>
 
-      <div className="flex items-center rounded-[24px] border border-slate-200 bg-white p-2 shadow-md">
-        <div className="pl-3 text-emerald-500">
-          <Search size={22} />
+      <div className="flex items-center rounded-[20px] border border-slate-200 bg-white px-2 py-1.5 shadow-md">
+        <div className="pl-2 text-emerald-500">
+          <Search size={20} />
         </div>
         <input
           type="text"
           placeholder={t.searchPlaceholder}
           value={queryCode}
           onChange={(e) => setQueryCode(e.target.value)}
-          className="flex-1 border-none bg-transparent px-3 py-3 text-base font-black text-slate-700 outline-none placeholder:text-slate-300 focus:ring-0"
+          className="flex-1 border-none bg-transparent px-2.5 py-2 text-sm font-black text-slate-700 outline-none placeholder:text-slate-300 focus:ring-0"
         />
         <button
           onClick={() => {
             void fetchBusData();
           }}
           disabled={loading}
-          className="h-11 rounded-2xl bg-emerald-600 px-6 text-sm font-black text-white transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+          className="h-9 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 text-xs font-black text-white shadow-md shadow-emerald-200 transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? <Loader2 className="animate-spin" size={18} /> : t.searchButton}
         </button>
