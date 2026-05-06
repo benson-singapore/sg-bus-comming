@@ -1,3 +1,5 @@
+import { WEBCLIP_ICON_BASE64 } from "./webclip-icon-base64";
+
 export const runtime = "edge";
 
 function escapeXml(value: string): string {
@@ -13,14 +15,6 @@ function createUuid(): string {
   return crypto.randomUUID();
 }
 
-function bytesToBase64(bytes: Uint8Array): string {
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
-}
-
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const origin = requestUrl.origin;
@@ -29,19 +23,6 @@ export async function GET(request: Request) {
   const profileDescription =
     lang === "en" ? `Install ${appName} WebClip` : `安装 ${appName} WebClip`;
   const webUrl = `${origin}/`;
-  let iconDataBlock = "";
-  try {
-    const iconResponse = await fetch(`${origin}/webclip-icon.png`, { cache: "force-cache" });
-    if (iconResponse.ok) {
-      const iconBytes = new Uint8Array(await iconResponse.arrayBuffer());
-      const iconBase64 = bytesToBase64(iconBytes);
-      iconDataBlock = `
-      <key>Icon</key>
-      <data>${iconBase64}</data>`;
-    }
-  } catch {
-    // Keep profile installable even when icon cannot be fetched.
-  }
   const profileUuid = createUuid();
   const payloadUuid = createUuid();
 
@@ -72,7 +53,8 @@ export async function GET(request: Request) {
       <integer>1</integer>
       <key>Precomposed</key>
       <true/>
-${iconDataBlock}
+      <key>Icon</key>
+      <data>${WEBCLIP_ICON_BASE64}</data>
       <key>URL</key>
       <string>${escapeXml(webUrl)}</string>
     </dict>
