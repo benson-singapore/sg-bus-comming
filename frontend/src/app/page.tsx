@@ -257,7 +257,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 pb-[calc(env(safe-area-inset-bottom)+7.5rem)] selection:bg-emerald-100">
-      <header className="z-20 bg-slate-100">
+      <header className="fixed top-0 right-0 left-0 z-40 bg-slate-100/95 backdrop-blur-sm">
         <div className="h-[env(safe-area-inset-top)] bg-slate-100" />
         <div className="px-4 pb-3">
           <div className="mx-auto flex max-w-md items-center justify-between rounded-[28px] bg-transparent px-0 py-4 text-emerald-700">
@@ -293,7 +293,7 @@ export default function Home() {
         </div>
       )}
 
-      <main className="mx-auto max-w-md p-4">
+      <main className="mx-auto max-w-md p-4 pt-[calc(env(safe-area-inset-top)+5.5rem)]">
         {activeTab === "home" && <HomeView stations={stations} arrivalCache={arrivalCache} t={t} />}
         {activeTab === "manage" && (
           <ManageView
@@ -913,10 +913,11 @@ function QueryView({
         </div>
         <input
           type="text"
+          inputMode="numeric"
           placeholder={t.searchPlaceholder}
           value={queryCode}
           onChange={(e) => setQueryCode(e.target.value)}
-          className="flex-1 border-none bg-transparent px-2.5 py-2 text-sm font-black text-slate-700 outline-none placeholder:text-slate-300 focus:ring-0"
+          className="flex-1 border-none bg-transparent px-2.5 py-2 text-base font-black text-slate-700 outline-none placeholder:text-slate-300 focus:ring-0"
         />
         <button
           onClick={() => {
