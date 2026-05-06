@@ -291,10 +291,14 @@ export default function Home() {
       {notification && (
         <div
           role="status"
-          className="animate-in fade-in slide-in-from-top-4 fixed top-3 left-1/2 z-[100] flex max-w-[min(90vw,20rem)] -translate-x-1/2 items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-md shadow-emerald-600/25"
+          aria-live="polite"
+          className="animate-in fade-in zoom-in-95 slide-in-from-bottom-3 duration-300 fixed left-1/2 z-[45] flex w-[min(100%-2rem,28rem)] -translate-x-1/2 items-start gap-2 rounded-2xl border border-emerald-200/70 bg-white/95 px-3.5 py-2.5 text-[11px] font-semibold leading-snug text-emerald-900 shadow-[0_10px_40px_rgba(15,118,110,0.12)] backdrop-blur-md"
+          style={{ bottom: "calc(env(safe-area-inset-bottom) + 7rem)" }}
         >
-          <Check className="shrink-0" size={15} strokeWidth={2.5} aria-hidden />
-          <span className="leading-tight">{notification}</span>
+          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+            <Check className="block" size={11} strokeWidth={3} aria-hidden />
+          </span>
+          <span>{notification}</span>
         </div>
       )}
 
