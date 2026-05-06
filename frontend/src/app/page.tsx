@@ -393,6 +393,7 @@ function PwaInstallEntry({ t }: { t: I18nText }) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalling, setIsInstalling] = useState(false);
   const [showIosSheet, setShowIosSheet] = useState(false);
+  const [iosInstallMode, setIosInstallMode] = useState<"profile" | "manual">("profile");
   const [isStandalone, setIsStandalone] = useState(false);
 
   const isIosDevice = useCallback(() => {
@@ -447,6 +448,7 @@ function PwaInstallEntry({ t }: { t: I18nText }) {
 
   const onInstall = async () => {
     if (ios) {
+      setIosInstallMode("profile");
       setShowIosSheet(true);
       return;
     }
@@ -497,11 +499,47 @@ function PwaInstallEntry({ t }: { t: I18nText }) {
                 {t.close}
               </button>
             </div>
-            <ol className="space-y-2 text-sm font-bold text-slate-600">
-              <li>1. {t.installHintIosStep1}</li>
-              <li>2. {t.installHintIosStep2}</li>
-              <li>3. {t.installHintIosStep3}</li>
-            </ol>
+            <div className="mb-3 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
+              <button
+                onClick={() => setIosInstallMode("profile")}
+                className={`rounded-lg px-2 py-2 text-xs font-black transition-all ${
+                  iosInstallMode === "profile"
+                    ? "bg-white text-emerald-600 shadow-sm"
+                    : "text-slate-500"
+                }`}
+              >
+                {t.installMethodProfile}
+              </button>
+              <button
+                onClick={() => setIosInstallMode("manual")}
+                className={`rounded-lg px-2 py-2 text-xs font-black transition-all ${
+                  iosInstallMode === "manual" ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500"
+                }`}
+              >
+                {t.installMethodManual}
+              </button>
+            </div>
+            {iosInstallMode === "profile" ? (
+              <div className="space-y-3">
+                <p className="text-sm font-bold text-slate-600">{t.installProfileDesc}</p>
+                <a
+                  href="/api/app/install-profile.mobileconfig"
+                  className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-emerald-200"
+                >
+                  {t.installProfileButton}
+                </a>
+                <p className="text-xs font-bold text-slate-500">{t.installProfileFallback}</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <ol className="space-y-2 text-sm font-bold text-slate-600">
+                  <li>1. {t.installHintIosStep1}</li>
+                  <li>2. {t.installHintIosStep2}</li>
+                  <li>3. {t.installHintIosStep3}</li>
+                </ol>
+                <p className="text-xs font-bold text-slate-500">{t.installManualHint}</p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -604,18 +642,46 @@ function EnhancedBusCard({
   onAdd?: () => void;
   t?: I18nText;
 }) {
+  const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+  const toTotalSeconds = (minutes?: number, seconds?: number) =>
+    Math.max(0, (minutes ?? 0) * 60 + (seconds ?? 0));
+  const mixHexColor = (from: string, to: string, t: number) => {
+    const ratio = clamp(t, 0, 1);
+    const fromHex = from.replace("#", "");
+    const toHex = to.replace("#", "");
+    const r = Math.round(
+      parseInt(fromHex.slice(0, 2), 16) + (parseInt(toHex.slice(0, 2), 16) - parseInt(fromHex.slice(0, 2), 16)) * ratio,
+    );
+    const g = Math.round(
+      parseInt(fromHex.slice(2, 4), 16) + (parseInt(toHex.slice(2, 4), 16) - parseInt(fromHex.slice(2, 4), 16)) * ratio,
+    );
+    const b = Math.round(
+      parseInt(fromHex.slice(4, 6), 16) + (parseInt(toHex.slice(4, 6), 16) - parseInt(fromHex.slice(4, 6), 16)) * ratio,
+    );
+    return `rgb(${r}, ${g}, ${b})`;
+  };
+
   const statusSoon = t?.statusSoon ?? "快到了";
   const statusComing = t?.statusComing ?? "即将到站";
+  const statusArrived = t?.statusArrived ?? "已到站";
   const currentTrip = t?.currentTrip ?? "当前班次";
   const nextTripLabel = t?.nextTrip ?? "下一趟";
   const nextNextTripLabel = t?.nextNextTrip ?? "下下趟";
   const gps = t?.gpsTime ?? "GPS定位";
 
+  const mainTripTotalSeconds = toTotalSeconds(arrival?.nextMinutes, arrival?.nextSeconds);
+  const nextTripTotalSeconds = toTotalSeconds(arrival?.next2Minutes, arrival?.next2Seconds);
+  const isArrived = mainTripTotalSeconds <= 0;
+
   const mainTrip = {
-    min: arrival?.nextMinutes ?? 2,
-    sec: arrival?.nextSeconds ?? 3,
+    min: Math.floor(mainTripTotalSeconds / 60),
+    sec: mainTripTotalSeconds % 60,
     time: arrival?.nextArrival ?? "11:27:56",
-    status: (arrival?.nextMinutes ?? 2) <= 3 ? statusSoon : statusComing,
+    status: isArrived
+      ? statusArrived
+      : mainTripTotalSeconds <= 3 * 60
+        ? statusSoon
+        : statusComing,
   };
   const nextTrip = {
     min: arrival?.next2Minutes ?? 14,
@@ -627,7 +693,26 @@ function EnhancedBusCard({
     sec: arrival?.next3Seconds ?? 29,
     arrival: arrival?.next3Arrival ?? "11:50:22",
   };
-  const progress = 85;
+  // Progress follows the countdown between "next" and "current". Once arrived, pin at 100%.
+  const progress = isArrived
+    ? 100
+    : nextTripTotalSeconds > 0
+      ? clamp(((nextTripTotalSeconds - mainTripTotalSeconds) / nextTripTotalSeconds) * 100, 0, 100)
+      : 0;
+  const arrivalColor = "#f54a00";
+  const isWithinTwoMinutes = mainTripTotalSeconds < 120;
+  const progressRatio = clamp(progress / 100, 0, 1);
+  const nearArrivalRatio = clamp((120 - mainTripTotalSeconds) / 120, 0, 1);
+  const progressStartColor = isArrived
+    ? arrivalColor
+    : isWithinTwoMinutes
+      ? mixHexColor("#fed7aa", arrivalColor, nearArrivalRatio)
+      : mixHexColor("#d1fae5", "#6ee7b7", progressRatio);
+  const progressEndColor = isArrived
+    ? arrivalColor
+    : isWithinTwoMinutes
+      ? mixHexColor("#fb923c", arrivalColor, nearArrivalRatio)
+      : mixHexColor("#34d399", "#059669", progressRatio);
 
   return (
     <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-md transition-all hover:border-emerald-200 hover:shadow-lg">
@@ -675,7 +760,11 @@ function EnhancedBusCard({
           </div>
 
           <div className="flex flex-col items-end gap-2 text-right">
-            <span className="rounded-lg bg-orange-600 px-3 py-1.5 text-[10px] font-black tracking-widest text-white uppercase shadow-md shadow-orange-100">
+            <span
+              className={`rounded-lg px-3 py-1.5 text-[10px] font-black tracking-widest text-white uppercase shadow-md ${
+                isArrived ? "bg-[#f54a00] shadow-orange-100" : "bg-orange-600 shadow-orange-100"
+              }`}
+            >
               {mainTrip.status}
             </span>
             <p className="flex items-center justify-end gap-1 text-[9px] font-black text-slate-400 uppercase">
@@ -687,8 +776,13 @@ function EnhancedBusCard({
         <div className="relative mt-2 mb-6 px-1">
           <div className="h-2 w-full rounded-full border border-slate-200/50 bg-slate-100 shadow-inner" />
           <div
-            className="absolute top-0 left-0 h-2 rounded-full bg-gradient-to-r from-emerald-100 to-emerald-400 transition-all duration-1000"
-            style={{ width: `${progress}%` }}
+            className="absolute top-0 left-0 h-2 rounded-full transition-all duration-1000"
+            style={{
+              width: `${progress}%`,
+              background: isArrived
+                ? arrivalColor
+                : `linear-gradient(to right, ${progressStartColor}, ${progressEndColor})`,
+            }}
           />
           <div
             className="absolute -top-3.5 flex -translate-x-1/2 flex-col items-center transition-all duration-1000"
