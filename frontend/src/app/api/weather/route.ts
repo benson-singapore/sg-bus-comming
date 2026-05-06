@@ -35,7 +35,10 @@ function formatTime(isoTime?: string) {
   if (!isoTime) return "--:--:--";
   const date = new Date(isoTime);
   if (Number.isNaN(date.getTime())) return "--:--:--";
-  return date.toLocaleTimeString("zh-CN", { hour12: false });
+  return date.toLocaleTimeString("zh-CN", {
+    hour12: false,
+    timeZone: "Asia/Singapore",
+  });
 }
 
 async function buildStationResponse(stationCode: string) {
