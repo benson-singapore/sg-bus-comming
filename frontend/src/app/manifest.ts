@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "SG 公交出行",
-    short_name: "SG 公交",
+    name: "巴士来了",
+    short_name: "巴士来了",
     description: "新加坡公交到站信息查询",
     start_url: "/",
     display: "standalone",

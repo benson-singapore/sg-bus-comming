@@ -338,7 +338,7 @@ export default function Home() {
         )}
       </main>
 
-      {activeTab === "manage" && <PwaInstallEntry t={t} />}
+      {activeTab === "manage" && <PwaInstallEntry t={t} lang={lang} />}
 
       <div
         className="fixed right-0 left-0 z-30 px-6"
@@ -389,7 +389,7 @@ export default function Home() {
   );
 }
 
-function PwaInstallEntry({ t }: { t: I18nText }) {
+function PwaInstallEntry({ t, lang }: { t: I18nText; lang: Lang }) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalling, setIsInstalling] = useState(false);
   const [showIosSheet, setShowIosSheet] = useState(false);
@@ -523,7 +523,7 @@ function PwaInstallEntry({ t }: { t: I18nText }) {
               <div className="space-y-3">
                 <p className="text-sm font-bold text-slate-600">{t.installProfileDesc}</p>
                 <a
-                  href="/api/app/install-profile.mobileconfig"
+                  href={`/api/app/install-profile.mobileconfig?lang=${lang}`}
                   className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-emerald-200"
                 >
                   {t.installProfileButton}
@@ -1026,7 +1026,17 @@ function QueryView({
 
       {error && <p className="px-2 text-sm font-bold text-rose-600">{error}</p>}
 
-      {results && (
+      {!results?.data?.length && (
+        <div className="px-2 py-5 text-center">
+          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100/70 text-emerald-600">
+            <Signpost size={18} />
+          </div>
+          <p className="text-sm font-black tracking-tight text-slate-700">{t.searchEmptyTitle}</p>
+          <p className="mt-1.5 text-xs font-bold leading-5 text-slate-500">{t.searchEmptyHint}</p>
+        </div>
+      )}
+
+      {results?.data?.length ? (
         <div className="space-y-4">
           <p className="px-2 text-center text-[10px] font-black tracking-widest text-emerald-600 uppercase">
             {results.stationName} {t.realtimeStatus}
@@ -1051,7 +1061,7 @@ function QueryView({
             ))}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

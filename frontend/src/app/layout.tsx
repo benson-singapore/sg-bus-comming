@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SG 公交出行",
+  title: "巴士来了",
   description: "新加坡公交到站信息查询",
   manifest: "/manifest.webmanifest",
   icons: {
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "SG 公交出行",
+    title: "巴士来了",
   },
 };
 

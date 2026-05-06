@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>PayloadContent</key><array><dict>
+<key>FullScreen</key><true/>
+<key>IsRemovable</key><true/>
+<key>Label</key><string>巴士来了</string>
+<key>PayloadDescription</key><string>Configures Web Clip</string>
+<key>PayloadDisplayName</key><string>巴士来了</string>
+<key>PayloadIdentifier</key><string>com.sgbuscoming.webclip</string>
+<key>PayloadType</key><string>com.apple.webClip.managed</string>
+<key>PayloadUUID</key><string>86348691-506e-4360-83de-881719573083</string>
+<key>PayloadVersion</key><integer>1</integer>
+<key>Precomposed</key><true/>
+<key>URL</key><string>https://example.com/</string>
+</dict></array>
+<key>PayloadDisplayName</key><string>巴士来了</string>
+<key>PayloadIdentifier</key><string>com.sgbuscoming.profile</string>
+<key>PayloadRemovalDisallowed</key><false/>
+<key>PayloadType</key><string>Configuration</string>
+<key>PayloadUUID</key><string>354edc66-746e-4792-a61f-bb7945244316</string>
+<key>PayloadVersion</key><integer>1</integer>
+</dict></plist>

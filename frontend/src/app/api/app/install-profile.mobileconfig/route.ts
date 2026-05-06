@@ -1,9 +1,5 @@
 export const runtime = "edge";
 
-function toPlistDate(date: Date): string {
-  return date.toISOString();
-}
-
 function escapeXml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
@@ -18,9 +14,13 @@ function createUuid(): string {
 }
 
 export async function GET(request: Request) {
-  const origin = new URL(request.url).origin;
+  const requestUrl = new URL(request.url);
+  const origin = requestUrl.origin;
+  const lang = requestUrl.searchParams.get("lang") === "en" ? "en" : "zh";
+  const appName = lang === "en" ? "Bus Comming" : "巴士来了";
+  const profileDescription =
+    lang === "en" ? `Install ${appName} WebClip` : `安装 ${appName} WebClip`;
   const webUrl = `${origin}/`;
-  const now = toPlistDate(new Date());
   const profileUuid = createUuid();
   const payloadUuid = createUuid();
 
@@ -36,11 +36,11 @@ export async function GET(request: Request) {
       <key>IsRemovable</key>
       <true/>
       <key>Label</key>
-      <string>SG 公交出行</string>
+      <string>${appName}</string>
       <key>PayloadDescription</key>
       <string>配置 Web Clip</string>
       <key>PayloadDisplayName</key>
-      <string>SG 公交出行</string>
+      <string>${appName}</string>
       <key>PayloadIdentifier</key>
       <string>com.sgbuscoming.webclip</string>
       <key>PayloadType</key>
@@ -56,13 +56,13 @@ export async function GET(request: Request) {
     </dict>
   </array>
   <key>PayloadDescription</key>
-  <string>Install SG 公交出行 WebClip</string>
+  <string>${profileDescription}</string>
   <key>PayloadDisplayName</key>
-  <string>SG 公交出行</string>
+  <string>${appName}</string>
   <key>PayloadIdentifier</key>
   <string>com.sgbuscoming.profile</string>
   <key>PayloadOrganization</key>
-  <string>SG Bus Coming</string>
+  <string>${appName}</string>
   <key>PayloadRemovalDisallowed</key>
   <false/>
   <key>PayloadType</key>
@@ -71,8 +71,6 @@ export async function GET(request: Request) {
   <string>${profileUuid}</string>
   <key>PayloadVersion</key>
   <integer>1</integer>
-  <key>PayloadCreationDate</key>
-  <date>${now}</date>
 </dict>
 </plist>
 `;
