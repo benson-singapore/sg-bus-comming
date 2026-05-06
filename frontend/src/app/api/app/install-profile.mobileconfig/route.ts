@@ -1,5 +1,4 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+export const runtime = "edge";
 
 function toPlistDate(date: Date): string {
   return date.toISOString();
@@ -18,12 +17,23 @@ function createUuid(): string {
   return crypto.randomUUID();
 }
 
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
 export async function GET(request: Request) {
   const origin = new URL(request.url).origin;
   const webUrl = `${origin}/`;
-  const iconPath = join(process.cwd(), "public", "logo.png");
-  const iconBuffer = await readFile(iconPath);
-  const iconBase64 = iconBuffer.toString("base64");
+  const iconResponse = await fetch(`${origin}/logo.png`, { cache: "force-cache" });
+  if (!iconResponse.ok) {
+    return new Response("Failed to load app icon", { status: 500 });
+  }
+  const iconBytes = new Uint8Array(await iconResponse.arrayBuffer());
+  const iconBase64 = bytesToBase64(iconBytes);
   const now = toPlistDate(new Date());
   const profileUuid = createUuid();
   const payloadUuid = createUuid();
