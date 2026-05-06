@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Bus,
+  Check,
   Clock,
   Download,
   Languages,
@@ -288,8 +289,12 @@ export default function Home() {
       </header>
 
       {notification && (
-        <div className="animate-in fade-in slide-in-from-top-4 fixed top-3 left-1/2 z-[100] -translate-x-1/2 rounded-2xl bg-orange-600 px-6 py-3 text-sm font-bold text-white shadow-xl shadow-orange-300/60">
-          {notification}
+        <div
+          role="status"
+          className="animate-in fade-in slide-in-from-top-4 fixed top-3 left-1/2 z-[100] flex max-w-[min(90vw,20rem)] -translate-x-1/2 items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-md shadow-emerald-600/25"
+        >
+          <Check className="shrink-0" size={15} strokeWidth={2.5} aria-hidden />
+          <span className="leading-tight">{notification}</span>
         </div>
       )}
 
