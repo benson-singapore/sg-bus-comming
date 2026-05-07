@@ -107,6 +107,10 @@ export default function Home() {
     routes: "",
   });
   const [editingStationId, setEditingStationId] = useState<string | null>(null);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const pullStartYRef = useRef<number | null>(null);
 
   const progressFetch = useCallback(async (input: RequestInfo | URL, init?: RequestInit) => {
     return fetch(input, init);
@@ -133,6 +137,36 @@ export default function Home() {
     localStorage.setItem(ARRIVAL_CACHE_KEY, JSON.stringify(arrivalCache));
   }, [arrivalCache]);
 
+  const refreshStationArrival = useCallback(
+    async (stationCode: string) => {
+      const normalizedCode = stationCode.trim();
+      if (!normalizedCode) return;
+      try {
+        const response = await progressFetch("/api/weather", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ stationCode: normalizedCode }),
+        });
+        if (!response.ok) return;
+        const data = (await response.json()) as QueryResult;
+        setArrivalCache((prev) => ({ ...prev, [normalizedCode]: data }));
+      } catch {
+        // ignore single refresh failure and keep last successful cache
+      }
+    },
+    [progressFetch],
+  );
+
+  const refreshAllStations = useCallback(async () => {
+    const uniqueStationCodes = Array.from(
+      new Set(stations.map((station) => station.code.trim()).filter(Boolean)),
+    );
+    if (uniqueStationCodes.length === 0) return;
+    await Promise.all(uniqueStationCodes.map((stationCode) => refreshStationArrival(stationCode)));
+  }, [refreshStationArrival, stations]);
+
   useEffect(() => {
     const uniqueStationCodes = Array.from(
       new Set(stations.map((station) => station.code.trim()).filter(Boolean)),
@@ -142,34 +176,8 @@ export default function Home() {
     let cancelled = false;
 
     const refreshArrivalData = async () => {
-      const requests = uniqueStationCodes.map(async (stationCode) => {
-        try {
-          const response = await progressFetch("/api/weather", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ stationCode }),
-          });
-          if (!response.ok) return null;
-          const data = (await response.json()) as QueryResult;
-          return { stationCode, data };
-        } catch {
-          return null;
-        }
-      });
-
-      const results = await Promise.all(requests);
+      await Promise.all(uniqueStationCodes.map((stationCode) => refreshStationArrival(stationCode)));
       if (cancelled) return;
-
-      setArrivalCache((prev) => {
-        const next = { ...prev };
-        for (const item of results) {
-          if (!item) continue;
-          next[item.stationCode] = item.data;
-        }
-        return next;
-      });
     };
 
     void refreshArrivalData();
@@ -181,7 +189,61 @@ export default function Home() {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [progressFetch, stations]);
+  }, [refreshStationArrival, stations]);
+
+  const pullHintPulling = lang === "zh" ? "下拉刷新" : "Pull to refresh";
+  const pullHintRelease = lang === "zh" ? "松手刷新" : "Release to refresh";
+  const pullHintRefreshing = lang === "zh" ? "刷新中..." : "Refreshing...";
+  const PULL_THRESHOLD = 72;
+  const MAX_PULL_DISTANCE = 132;
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (activeTab !== "home" || isPullRefreshing) return;
+    const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+    if (scrollTop > 0) return;
+    pullStartYRef.current = event.touches[0]?.clientY ?? null;
+    setIsPulling(false);
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (activeTab !== "home" || isPullRefreshing) return;
+    if (pullStartYRef.current === null) return;
+    const currentY = event.touches[0]?.clientY ?? pullStartYRef.current;
+    const delta = currentY - pullStartYRef.current;
+    if (delta <= 0) {
+      setPullDistance(0);
+      setIsPulling(false);
+      return;
+    }
+    const dampedDistance = Math.min(MAX_PULL_DISTANCE, delta * 0.48);
+    setPullDistance(dampedDistance);
+    setIsPulling(true);
+    if (event.cancelable) {
+      event.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (activeTab !== "home") {
+      pullStartYRef.current = null;
+      return;
+    }
+    const reachedThreshold = pullDistance >= PULL_THRESHOLD;
+    pullStartYRef.current = null;
+    setIsPulling(false);
+    if (!reachedThreshold || isPullRefreshing) {
+      setPullDistance(0);
+      return;
+    }
+    setIsPullRefreshing(true);
+    setPullDistance(PULL_THRESHOLD);
+    try {
+      await refreshAllStations();
+    } finally {
+      setPullDistance(0);
+      setIsPullRefreshing(false);
+    }
+  };
   const [notification, setNotification] = useState<string | null>(null);
 
   const notify = (message: string) => {
@@ -303,8 +365,55 @@ export default function Home() {
         </div>
       )}
 
-      <main className="mx-auto max-w-md p-4 pt-[calc(env(safe-area-inset-top)+5.5rem)]">
-        {activeTab === "home" && <HomeView stations={stations} arrivalCache={arrivalCache} t={t} />}
+      <main
+        className="mx-auto max-w-md p-4 pt-[calc(env(safe-area-inset-top)+5.5rem)]"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={() => {
+          void handleTouchEnd();
+        }}
+        onTouchCancel={() => {
+          pullStartYRef.current = null;
+          setIsPulling(false);
+          setPullDistance(0);
+        }}
+      >
+        {activeTab === "home" && (isPulling || isPullRefreshing || pullDistance > 0) && (
+          <div
+            className="overflow-hidden transition-[height,opacity] duration-200"
+            style={{
+              height: `${pullDistance}px`,
+              opacity: Math.min(1, pullDistance / PULL_THRESHOLD),
+            }}
+          >
+            <div
+              className="flex h-full items-center justify-center gap-2 text-emerald-600 transition-transform duration-200"
+              style={{ transform: `translateY(${Math.max(0, (PULL_THRESHOLD - pullDistance) * 0.28)}px)` }}
+            >
+              <RotateCw
+                size={16}
+                className={`${isPullRefreshing ? "animate-spin" : ""} ${
+                  !isPullRefreshing && pullDistance >= PULL_THRESHOLD ? "rotate-180" : ""
+                } transition-transform duration-200`}
+              />
+              <span className="text-xs font-bold">
+                {isPullRefreshing
+                  ? pullHintRefreshing
+                  : pullDistance >= PULL_THRESHOLD
+                    ? pullHintRelease
+                    : pullHintPulling}
+              </span>
+            </div>
+          </div>
+        )}
+        {activeTab === "home" && (
+          <HomeView
+            stations={stations}
+            arrivalCache={arrivalCache}
+            onRefreshStation={refreshStationArrival}
+            t={t}
+          />
+        )}
         {activeTab === "manage" && (
           <ManageView
             stations={stations}
@@ -592,10 +701,12 @@ function NavButton({
 function HomeView({
   stations,
   arrivalCache,
+  onRefreshStation,
   t,
 }: {
   stations: Station[];
   arrivalCache: CachedArrivalMap;
+  onRefreshStation: (stationCode: string) => Promise<void>;
   t: I18nText;
 }) {
   if (stations.length === 0) {
@@ -628,6 +739,7 @@ function HomeView({
               arrival={arrivalCache[station.code]?.data.find(
                 (item) => normalizeRouteKey(item.route) === normalizeRouteKey(route),
               )}
+              onRefresh={() => onRefreshStation(station.code)}
               t={t}
             />
           ))}
@@ -648,10 +760,11 @@ function EnhancedBusCard({
   route: string;
   stationName: string;
   arrival?: BusCardData;
-  onRefresh?: () => void;
+  onRefresh?: () => void | Promise<void>;
   onAdd?: () => void;
   t?: I18nText;
 }) {
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
   const toTotalSeconds = (minutes?: number, seconds?: number) =>
     Math.max(0, (minutes ?? 0) * 60 + (seconds ?? 0));
@@ -731,6 +844,16 @@ function EnhancedBusCard({
       ? mixHexColor("#fb923c", arrivalColor, nearArrivalRatio)
       : mixHexColor("#34d399", "#059669", progressRatio);
 
+  const handleRefresh = async () => {
+    if (!onRefresh || isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-md transition-all hover:border-emerald-200 hover:shadow-lg">
       <div className="flex items-center justify-between bg-emerald-500 px-5 py-3 text-white">
@@ -747,10 +870,12 @@ function EnhancedBusCard({
             </button>
           )}
           <button
-            onClick={onRefresh}
+            onClick={() => {
+              void handleRefresh();
+            }}
             className="rounded-lg p-1.5 transition-all hover:bg-white/20"
           >
-            <RotateCw size={14} />
+            <RotateCw size={14} className={isRefreshing ? "animate-spin" : ""} />
           </button>
         </div>
       </div>
