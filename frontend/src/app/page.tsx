@@ -16,6 +16,7 @@ import {
   RotateCw,
   Search,
   Settings,
+  AlertTriangle,
   Trash2,
   X,
 } from "lucide-react";
@@ -677,6 +678,13 @@ function EnhancedBusCard({
   const nextTripLabel = t?.nextTrip ?? "下一趟";
   const nextNextTripLabel = t?.nextNextTrip ?? "下下趟";
   const gps = t?.gpsTime ?? "GPS定位";
+  const servicePaused = "服务暂停";
+
+  const hasRealtimeData =
+    arrival !== undefined &&
+    (typeof arrival.nextMinutes === "number" ||
+      typeof arrival.nextSeconds === "number" ||
+      typeof arrival.nextArrival === "string");
 
   const mainTripTotalSeconds = toTotalSeconds(arrival?.nextMinutes, arrival?.nextSeconds);
   const nextTripTotalSeconds = toTotalSeconds(arrival?.next2Minutes, arrival?.next2Seconds);
@@ -748,6 +756,18 @@ function EnhancedBusCard({
       </div>
 
       <div className="p-5">
+        {!hasRealtimeData ? (
+          <div className="relative flex min-h-[170px] -translate-y-3 flex-col items-center justify-center overflow-hidden rounded-2xl px-4 text-center">
+            <div className="relative mb-2 rounded-2xl bg-white p-3 shadow-sm shadow-amber-100/70">
+              <AlertTriangle size={20} className="text-amber-500" />
+            </div>
+            <p className="relative text-base font-black tracking-wide text-amber-700">{servicePaused}</p>
+            <p className="relative mt-1 text-xs font-bold tracking-wide text-amber-500/90">
+              暂无实时到站数据
+            </p>
+          </div>
+        ) : (
+          <>
         <div className="mb-4 flex items-end justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-1.5">
@@ -833,6 +853,8 @@ function EnhancedBusCard({
             </div>
           </div>
         </div>
+          </>
+        )}
       </div>
     </div>
   );
