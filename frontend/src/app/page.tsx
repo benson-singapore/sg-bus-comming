@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Bus,
+  Building2,
   Check,
   Clock,
   Download,
@@ -1011,7 +1012,10 @@ function ManageView({
   return (
     <div className="animate-in fade-in slide-in-from-right-4 space-y-6 duration-500">
       <div className="mt-2 flex items-center justify-between px-1">
-        <h2 className="text-xl font-black tracking-tight text-slate-800">{t.manageTitle}</h2>
+        <h2 className="flex items-center gap-2 text-xl font-black tracking-tight text-slate-800">
+          <MapPin size={18} className="text-emerald-500" />
+          {t.manageTitle}
+        </h2>
         <button
           onClick={onOpenAdd}
           className="group flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-2.5 font-black text-white shadow-lg shadow-emerald-200 transition-all active:scale-95"
@@ -1155,7 +1159,10 @@ function QueryView({
 
   return (
     <div className="animate-in fade-in slide-in-from-left-4 space-y-5 duration-500">
-      <h2 className="px-1 text-lg font-black text-slate-800">{t.searchCityTitle}</h2>
+      <h2 className="flex items-center gap-2 px-1 text-lg font-black text-slate-800">
+        <Building2 size={18} className="text-emerald-500" />
+        {t.searchCityTitle}
+      </h2>
 
       <div className="flex items-center rounded-[20px] border border-slate-200 bg-white px-2 py-1.5 shadow-md">
         <div className="pl-2 text-emerald-500">
