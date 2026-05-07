@@ -1244,11 +1244,6 @@ function AddStationModal({
 }) {
   const [formData, setFormData] = useState(initialData);
   const hasAutoSavedRef = useRef(false);
-  const nameInputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    nameInputRef.current?.focus();
-  }, []);
 
   const canAutoSave =
     mode === "add" && formData.code.trim() !== "" && formData.routes.trim() !== "";
@@ -1300,7 +1295,6 @@ function AddStationModal({
               {t.stationNameLabel}
             </label>
             <input
-              ref={nameInputRef}
               required
               type="text"
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-bold text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
