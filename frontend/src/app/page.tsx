@@ -15,6 +15,8 @@ import {
   Pencil,
   Plus,
   RotateCw,
+  ChevronUp,
+  ChevronDown,
   Search,
   Settings,
   AlertTriangle,
@@ -1003,7 +1005,6 @@ function ManageView({
   onOpenAdd: () => void;
   t: I18nText;
 }) {
-  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [draggingRoute, setDraggingRoute] = useState<{
     stationId: string;
     routeIndex: number;
@@ -1029,27 +1030,7 @@ function ManageView({
         {stations.map((station, index) => (
           <div
             key={station.id}
-            draggable
-            onDragStart={(e) => {
-              const target = e.target as HTMLElement;
-              if (target.closest('[data-route-chip="true"]')) {
-                e.preventDefault();
-                return;
-              }
-              setDraggingIndex(index);
-            }}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={() => {
-              if (draggingIndex === null) return;
-              onReorder(draggingIndex, index);
-              setDraggingIndex(null);
-            }}
-            onDragEnd={() => setDraggingIndex(null)}
-            className={`group flex items-center justify-between rounded-2xl border bg-white px-4 py-3 shadow-sm transition-all ${
-              draggingIndex === index
-                ? "border-emerald-300 shadow-emerald-100"
-                : "border-slate-200 hover:border-emerald-200 hover:shadow-md"
-            }`}
+            className="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition-all hover:border-emerald-200 hover:shadow-md"
           >
             <div className="space-y-1">
               <h3 className="text-base leading-none font-black text-slate-800">{station.name}</h3>
@@ -1082,7 +1063,24 @@ function ManageView({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="cursor-grab text-xs font-black tracking-widest text-slate-300">{t.drag}</span>
+              <div className="flex flex-col gap-1">
+                <button
+                  onClick={() => onReorder(index, index - 1)}
+                  disabled={index === 0}
+                  className="flex h-5 w-5 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-500 transition-all disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Move up"
+                >
+                  <ChevronUp size={12} />
+                </button>
+                <button
+                  onClick={() => onReorder(index, index + 1)}
+                  disabled={index === stations.length - 1}
+                  className="flex h-5 w-5 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-500 transition-all disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Move down"
+                >
+                  <ChevronDown size={12} />
+                </button>
+              </div>
               <button
                 onClick={() => onOpenEdit(station)}
                 className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 text-slate-300 transition-all hover:bg-amber-50 hover:text-amber-600"
@@ -1316,7 +1314,7 @@ function AddStationModal({
               <input
                 required
                 type="text"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold text-slate-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-base font-bold text-slate-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                 value={formData.code}
                 onChange={(e) => setFormData((prev) => ({ ...prev, code: e.target.value }))}
               />
@@ -1327,7 +1325,7 @@ function AddStationModal({
               </label>
               <input
                 type="text"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold text-slate-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-base font-bold text-slate-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                 placeholder={t.routesPlaceholder}
                 value={formData.routes}
                 onChange={(e) => setFormData((prev) => ({ ...prev, routes: e.target.value }))}
