@@ -1,6 +1,6 @@
 # SG Bus Coming Frontend
 
-本项目使用 Next.js（App Router）构建前端页面，并通过 Next.js API Route 在服务端代理真实后端接口，避免前端暴露 API Key，同时支持部署到 Cloudflare Pages。
+本项目使用 Next.js（App Router）构建前端页面，并通过 Next.js API Route 在服务端代理真实后端接口，避免前端暴露 API Key，同时通过 `@opennextjs/cloudflare` 部署到 Cloudflare Workers。
 
 ## 版本与技术栈
 
@@ -59,7 +59,7 @@ npm run cf:build
 npm run cf:dev
 ```
 
-3. 部署静态资源到 Cloudflare Pages：
+3. 部署到 Cloudflare Workers：
 
 ```bash
 npm run cf:deploy
@@ -67,12 +67,19 @@ npm run cf:deploy
 
 ## Cloudflare 控制台关键配置
 
-在 Cloudflare Pages 项目中，请确认：
+本项目使用 **OpenNext**（`@opennextjs/cloudflare`），**不要**使用已废弃的 `@cloudflare/next-on-pages`。
 
-1. 环境变量：
-   - `NODE_VERSION=20`
-2. 兼容性标志：
-   - Preview 与 Production 都开启 `nodejs_compat`
+在 Cloudflare Workers（Git 集成）或 Pages 项目中，请确认：
+
+| 设置 | 值 |
+|------|-----|
+| Root directory | `frontend` |
+| Build command | `npm run cf:build` |
+| Deploy command（Workers Builds） | `npx wrangler deploy` |
+| 环境变量 | `NODE_VERSION=20` |
+| 兼容性标志 | Preview 与 Production 都开启 `nodejs_compat` |
+
+> 若 Build command 仍为 `npx @cloudflare/next-on-pages@1`，构建会失败。请在控制台手动改为 `npm run cf:build`。
 
 ## 关键配置文件
 
