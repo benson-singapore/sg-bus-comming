@@ -20,6 +20,7 @@ import {
   Search,
   Settings,
   AlertTriangle,
+  Star,
   Trash2,
   X,
 } from "lucide-react";
@@ -54,8 +55,14 @@ type QueryResult = {
 
 type TabKey = "home" | "query" | "manage";
 type CachedArrivalMap = Record<string, QueryResult>;
+type SearchFavorite = {
+  id: string;
+  name: string;
+  code: string;
+};
 const STATIONS_STORAGE_KEY = "sg-bus-coming:stations";
 const ARRIVAL_CACHE_KEY = "sg-bus-coming:arrival-cache";
+const SEARCH_FAVORITES_KEY = "sg-bus-coming:search-favorites";
 const PWA_INSTALLED_MARK_KEY = "sg-bus-coming:pwa-installed";
 
 type BeforeInstallPromptEvent = Event & {
@@ -442,7 +449,7 @@ export default function Home() {
             t={t}
           />
         )}
-        {activeTab === "query" && (
+        <div className={activeTab === "query" ? undefined : "hidden"}>
           <QueryView
             cachedArrivalMap={arrivalCache}
             onCacheArrival={(stationCode, data) =>
@@ -455,9 +462,10 @@ export default function Home() {
               setAddModalKey((prev) => prev + 1);
               setIsAddModalOpen(true);
             }}
+            onNotify={notify}
             t={t}
           />
-        )}
+        </div>
       </main>
 
       {activeTab === "manage" && <PwaInstallEntry t={t} lang={lang} />}
@@ -1106,12 +1114,14 @@ function QueryView({
   onCacheArrival,
   progressFetch,
   onQuickAdd,
+  onNotify,
   t,
 }: {
   cachedArrivalMap: CachedArrivalMap;
   onCacheArrival: (stationCode: string, data: QueryResult) => void;
   progressFetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
   onQuickAdd: (draft: Omit<Station, "id">) => void;
+  onNotify: (message: string) => void;
   t: I18nText;
 }) {
   const [queryCode, setQueryCode] = useState("");
@@ -1119,6 +1129,30 @@ function QueryView({
   const [results, setResults] = useState<QueryResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastSearchedCode, setLastSearchedCode] = useState("");
+  const [searchFavorites, setSearchFavorites] = useState<SearchFavorite[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = localStorage.getItem(SEARCH_FAVORITES_KEY);
+      const parsed = raw ? (JSON.parse(raw) as SearchFavorite[]) : [];
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (item) => item && typeof item.id === "string" && item.name && item.code,
+        );
+      }
+    } catch {
+      // ignore broken cache
+    }
+    return [];
+  });
+  const [isFavoriteModalOpen, setIsFavoriteModalOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem(SEARCH_FAVORITES_KEY, JSON.stringify(searchFavorites));
+  }, [searchFavorites]);
+
+  const isCurrentFavorited = searchFavorites.some(
+    (item) => item.code.trim() === lastSearchedCode.trim(),
+  );
 
   const fetchBusData = async (forceCode?: string) => {
     const stationCode = (forceCode ?? queryCode).trim();
@@ -1155,6 +1189,50 @@ function QueryView({
     }
   };
 
+  const addSearchFavorite = (name: string) => {
+    const code = lastSearchedCode.trim();
+    const trimmedName = name.trim();
+    if (!code || !trimmedName) return;
+
+    setSearchFavorites((prev) => {
+      const existingIndex = prev.findIndex((item) => item.code.trim() === code);
+      if (existingIndex >= 0) {
+        const next = [...prev];
+        next[existingIndex] = { ...next[existingIndex], name: trimmedName };
+        return next;
+      }
+      return [{ id: Date.now().toString(), name: trimmedName, code }, ...prev];
+    });
+    setIsFavoriteModalOpen(false);
+    onNotify(t.searchFavoriteAdded);
+  };
+
+  const removeSearchFavorite = (id: string) => {
+    setSearchFavorites((prev) => prev.filter((item) => item.id !== id));
+    onNotify(t.searchFavoriteRemoved);
+  };
+
+  const removeCurrentFavorite = () => {
+    const code = lastSearchedCode.trim();
+    if (!code) return;
+    setSearchFavorites((prev) => prev.filter((item) => item.code.trim() !== code));
+    onNotify(t.searchFavoriteRemoved);
+  };
+
+  const searchFavorite = (favorite: SearchFavorite) => {
+    setQueryCode(favorite.code);
+    void fetchBusData(favorite.code);
+  };
+
+  const resetSearch = () => {
+    setQueryCode("");
+    setResults(null);
+    setError(null);
+    setLastSearchedCode("");
+  };
+
+  const showFavorites = !results?.data?.length && !loading && searchFavorites.length > 0;
+
   return (
     <div className="animate-in fade-in slide-in-from-left-4 space-y-5 duration-500">
       <h2 className="flex items-center gap-2 px-1 text-lg font-black text-slate-800">
@@ -1171,7 +1249,15 @@ function QueryView({
           inputMode="numeric"
           placeholder={t.searchPlaceholder}
           value={queryCode}
-          onChange={(e) => setQueryCode(e.target.value)}
+          onChange={(e) => {
+            const nextValue = e.target.value;
+            setQueryCode(nextValue);
+            if (!nextValue.trim()) {
+              setResults(null);
+              setError(null);
+              setLastSearchedCode("");
+            }
+          }}
           className="flex-1 border-none bg-transparent px-2.5 py-2 text-base font-black text-slate-700 outline-none placeholder:text-slate-300 focus:ring-0"
         />
         <button
@@ -1187,7 +1273,40 @@ function QueryView({
 
       {error && <p className="px-2 text-sm font-bold text-rose-600">{error}</p>}
 
-      {!results?.data?.length && (
+      {showFavorites && (
+        <div className="px-2 py-2 text-center">
+          <p className="mb-2 text-[10px] font-bold text-slate-400">{t.searchFavoritesSection}</p>
+          <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1.5">
+            {searchFavorites.map((favorite, index) => (
+              <span key={favorite.id} className="inline-flex items-center">
+                {index > 0 && <span className="mx-1.5 text-[10px] text-slate-300">·</span>}
+                <button
+                  type="button"
+                  onClick={() => searchFavorite(favorite)}
+                  className="group inline-flex items-baseline gap-1 transition-colors"
+                >
+                  <span className="text-[11px] font-bold text-slate-500 group-hover:text-emerald-600 group-active:text-emerald-600">
+                    {favorite.name}
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-500/80 group-hover:text-emerald-600 group-active:text-emerald-600">
+                    {favorite.code}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeSearchFavorite(favorite.id)}
+                  className="ml-0.5 inline-flex items-center justify-center rounded p-0.5 text-slate-300 transition-colors hover:text-slate-500 active:text-rose-500"
+                  aria-label="Remove"
+                >
+                  <X size={10} />
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!showFavorites && !results?.data?.length && (
         <div className="px-2 py-5 text-center">
           <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100/70 text-emerald-600">
             <Signpost size={18} />
@@ -1199,9 +1318,40 @@ function QueryView({
 
       {results?.data?.length ? (
         <div className="space-y-4">
-          <p className="px-2 text-center text-[10px] font-black tracking-widest text-emerald-600 uppercase">
-            {results.stationName} {t.realtimeStatus}
-          </p>
+          <div className="flex items-center justify-between gap-2 px-2">
+            <p className="min-w-0 truncate text-[10px] font-black tracking-widest text-emerald-600 uppercase">
+              {results.stationName} {t.realtimeStatus}
+            </p>
+            <div className="flex shrink-0 items-center gap-2">
+              {isCurrentFavorited ? (
+                <button
+                  type="button"
+                  onClick={removeCurrentFavorite}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-[10px] font-black tracking-wide text-emerald-600 uppercase transition-all hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 active:scale-95"
+                >
+                  <Star size={12} fill="currentColor" />
+                  {t.searchFavoriteSaved}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsFavoriteModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[10px] font-black tracking-wide text-slate-600 uppercase shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600 active:scale-95"
+                >
+                  <Star size={12} />
+                  {t.searchFavoriteButton}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={resetSearch}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[10px] font-black tracking-wide text-slate-500 uppercase shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700 active:scale-95"
+              >
+                <RotateCw size={12} />
+                {t.searchReset}
+              </button>
+            </div>
+          </div>
           <div className="space-y-4">
             {results.data.map((item, idx) => (
               <EnhancedBusCard
@@ -1223,6 +1373,82 @@ function QueryView({
           </div>
         </div>
       ) : null}
+
+      {isFavoriteModalOpen && (
+        <FavoriteNameModal
+          stationCode={lastSearchedCode}
+          defaultName={results?.stationName ?? ""}
+          onClose={() => setIsFavoriteModalOpen(false)}
+          onSave={addSearchFavorite}
+          t={t}
+        />
+      )}
+    </div>
+  );
+}
+
+function FavoriteNameModal({
+  stationCode,
+  defaultName,
+  onClose,
+  onSave,
+  t,
+}: {
+  stationCode: string;
+  defaultName: string;
+  onClose: () => void;
+  onSave: (name: string) => void;
+  t: I18nText;
+}) {
+  const [name, setName] = useState(defaultName);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/55 backdrop-blur-sm">
+      <div className="animate-in slide-in-from-bottom w-full max-w-md overflow-hidden rounded-t-3xl border-t border-white bg-white shadow-2xl duration-500">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-5 py-4">
+          <div>
+            <h2 className="text-lg font-black tracking-tight text-slate-800">{t.searchFavoriteTitle}</h2>
+            <p className="mt-0.5 text-xs font-bold text-slate-400">{t.searchFavoriteHint}</p>
+          </div>
+          <button onClick={onClose} className="rounded-lg bg-white p-1.5 text-slate-400 shadow-sm">
+            <X size={18} />
+          </button>
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSave(name);
+          }}
+          className="space-y-4 px-5 pt-4 pb-6"
+        >
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+            <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+              {t.stationCodeLabel}
+            </p>
+            <p className="mt-1 text-base font-black text-slate-700">{stationCode}</p>
+          </div>
+          <div className="space-y-1.5">
+            <label className="pl-1 text-[10px] font-black tracking-widest text-slate-500 uppercase">
+              {t.stationNameLabel}
+            </label>
+            <input
+              required
+              autoFocus
+              type="text"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-bold text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <button
+            type="submit"
+            className="mt-1 w-full rounded-2xl bg-emerald-600 py-3.5 text-sm font-black tracking-wide text-white uppercase shadow-lg shadow-emerald-200 transition-all active:scale-95"
+          >
+            {t.searchFavoriteConfirm}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
