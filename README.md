@@ -1,5 +1,7 @@
 # SG Bus Comming（巴士来了）
 
+**中文** · [English](./README.en.md)
+
 面向新加坡公交用户的实时到站查询工具。你可以按站点编号查询公交到站时间，收藏常用站点和关注线路，并将应用安装到手机主屏幕，方便日常通勤使用。
 
 实时公交数据来自 [ArriveLah2](https://arrivelah2.busrouter.sg/)。
