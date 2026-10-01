@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "新加坡公交到站信息查询",
     start_url: "/",
     display: "standalone",
-    background_color: "#f1f5f9",
+    background_color: "#e2e8f0",
     theme_color: "#10b981",
     icons: [
       {
