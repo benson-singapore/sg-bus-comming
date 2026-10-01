@@ -2,7 +2,7 @@
 @import "nprogress/nprogress.css";
 
 :root {
-  --background: #e2e8f0;
+  --background: #f1f5f9;
   --foreground: #171717;
 }
 
@@ -15,7 +15,7 @@
 
 html,
 body {
-  background: #e2e8f0;
+  background: #f1f5f9;
   min-height: 100%;
 }
 
