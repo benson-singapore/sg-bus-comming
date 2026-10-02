@@ -330,7 +330,7 @@ export default function Home() {
   };
 
   return (
-    <div className="relative mx-auto min-h-screen max-w-md bg-slate-100 text-slate-800 pb-[calc(env(safe-area-inset-bottom)+7.5rem)] selection:bg-emerald-100">
+    <div className="relative mx-auto min-h-screen w-full max-w-md bg-slate-100 text-slate-800 pb-[calc(env(safe-area-inset-bottom)+7.5rem)] selection:bg-emerald-100">
       <header className="fixed top-0 right-0 left-0 z-40">
         <div className="mx-auto max-w-md bg-slate-100 backdrop-blur-sm">
           <div className="h-[env(safe-area-inset-top)] bg-slate-100" />
