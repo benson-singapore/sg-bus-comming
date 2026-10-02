@@ -330,12 +330,12 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800 pb-[calc(env(safe-area-inset-bottom)+7.5rem)] selection:bg-emerald-100 md:mx-auto md:max-w-md">
-      <header className="fixed top-0 right-0 left-0 z-40 bg-transparent">
-        <div className="mx-auto max-w-md bg-slate-100">
+    <div className="relative mx-auto min-h-screen max-w-md bg-slate-100 text-slate-800 pb-[calc(env(safe-area-inset-bottom)+7.5rem)] selection:bg-emerald-100">
+      <header className="fixed top-0 right-0 left-0 z-40">
+        <div className="mx-auto max-w-md bg-slate-100 backdrop-blur-sm">
           <div className="h-[env(safe-area-inset-top)] bg-slate-100" />
           <div className="px-4 pb-3">
-            <div className="mx-auto flex max-w-md items-center justify-between rounded-[28px] bg-transparent px-0 py-4 text-emerald-700">
+            <div className="flex items-center justify-between rounded-[28px] bg-transparent px-0 py-4 text-emerald-700">
               <div className="flex items-center gap-4">
                 <div className="flex items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-green-400 p-2 shadow-sm shadow-emerald-200/80">
                   <Bus className="h-6 w-6 text-white" />
