@@ -62,7 +62,7 @@ type BusCardData = {
 };
 
 type QueryResult = {
-  stationName: string;
+  stationCode: string;
   data: BusCardData[];
 };
 
@@ -762,6 +762,7 @@ function HomeView({
               key={`${station.id}-${route}`}
               route={route.trim()}
               stationName={station.name}
+              stationCode={station.code}
               arrival={arrivalCache[station.code]?.data.find(
                 (item) => normalizeRouteKey(item.route) === normalizeRouteKey(route),
               )}
@@ -931,13 +932,15 @@ function LoadBadge({ load, t }: { load?: string; t?: I18nText }) {
 function EnhancedBusCard({
   route,
   stationName,
+  stationCode,
   arrival,
   onRefresh,
   onAdd,
   t,
 }: {
   route: string;
-  stationName: string;
+  stationName?: string;
+  stationCode?: string;
   arrival?: BusCardData;
   onRefresh?: () => void | Promise<void>;
   onAdd?: () => void;
@@ -1048,9 +1051,11 @@ function EnhancedBusCard({
       <div className="flex items-center justify-between bg-emerald-500 px-5 py-3 text-white">
         <div className="flex items-center gap-3">
           <h3 className="text-xl leading-none font-black">{route}</h3>
-          <span className="border-l border-white/30 pl-3 text-[11px] font-bold opacity-80">
-            {stationName}
-          </span>
+          {(stationName || stationCode) && (
+            <span className="border-l border-white/30 pl-3 text-[11px] font-bold opacity-80">
+              {[stationName, stationCode].filter(Boolean).join(" · ")}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1">
           {onAdd && (
@@ -1507,7 +1512,7 @@ function QueryView({
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-2 px-2">
             <p className="min-w-0 truncate text-[10px] font-black tracking-widest text-emerald-600 uppercase">
-              {results.stationName} {t.realtimeStatus}
+              {t.stationLabel} {results.stationCode} {t.realtimeStatus}
             </p>
             <div className="flex shrink-0 items-center gap-2">
               {isCurrentFavorited ? (
@@ -1544,7 +1549,7 @@ function QueryView({
               <EnhancedBusCard
                 key={`${item.route}-${idx}`}
                 route={item.route}
-                stationName={results.stationName}
+                stationCode={results.stationCode}
                 arrival={item}
                 onRefresh={() => fetchBusData(lastSearchedCode)}
                 onAdd={() =>
@@ -1564,7 +1569,7 @@ function QueryView({
       {isFavoriteModalOpen && (
         <FavoriteNameModal
           stationCode={lastSearchedCode}
-          defaultName={results?.stationName ?? ""}
+          defaultName={results ? `${t.stationLabel} ${results.stationCode}` : ""}
           onClose={() => setIsFavoriteModalOpen(false)}
           onSave={addSearchFavorite}
           t={t}

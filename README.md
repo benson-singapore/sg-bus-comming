@@ -182,21 +182,27 @@ Content-Type: application/json
 GET /api/weather?city=67661
 ```
 
-`67661` 是示例公交站码。成功响应会返回站点名称和线路数据，例如：
+`67661` 是示例公交站码。成功响应会返回站码和线路数据（展示文案由前端按当前语言组装），例如：
 
 ```json
 {
-  "stationName": "站点 67661",
+  "stationCode": "67661",
   "data": [
     {
       "route": "371",
       "nextMinutes": 5,
       "nextSeconds": 12,
-      "nextArrival": "10:30:00"
+      "nextArrival": "10:30:00",
+      "nextType": "SD",
+      "nextLoad": "SEA",
+      "nextFeature": "WAB",
+      "nextMonitored": 1
     }
   ]
 }
 ```
+
+`nextType` / `next2Type` / `next3Type` 表示车型：`SD` 单层、`DD` 双层、`BD` 铰接式；`nextLoad` 表示车厢拥挤度：`SEA` 有座位、`SDA` 有站位、`LSD` 站位有限。
 
 接口实现：[`frontend/src/app/api/weather/route.ts`](./frontend/src/app/api/weather/route.ts)。
 

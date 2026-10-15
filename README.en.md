@@ -183,21 +183,27 @@ Content-Type: application/json
 GET /api/weather?city=67661
 ```
 
-`67661` is an example bus stop code. A successful response includes the station name and route data, for example:
+`67661` is an example bus stop code. A successful response includes the stop code and route data (display text is composed on the client for the active language), for example:
 
 ```json
 {
-  "stationName": "Station 67661",
+  "stationCode": "67661",
   "data": [
     {
       "route": "371",
       "nextMinutes": 5,
       "nextSeconds": 12,
-      "nextArrival": "10:30:00"
+      "nextArrival": "10:30:00",
+      "nextType": "SD",
+      "nextLoad": "SEA",
+      "nextFeature": "WAB",
+      "nextMonitored": 1
     }
   ]
 }
 ```
+
+`nextType` / `next2Type` / `next3Type` is the bus type: `SD` single deck, `DD` double deck, `BD` articulated. `nextLoad` is the crowding level: `SEA` seats available, `SDA` standing available, `LSD` limited standing.
 
 Implementation: [`frontend/src/app/api/weather/route.ts`](./frontend/src/app/api/weather/route.ts).
 

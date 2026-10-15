@@ -99,7 +99,8 @@ async function buildStationResponse(stationCode: string) {
     }) ?? [];
 
   return NextResponse.json({
-    stationName: `站点 ${stationCode}`,
+    // 只返回原始站码，展示文案交给前端按当前语言组装，避免接口返回写死的中文
+    stationCode,
     data,
   });
 }
