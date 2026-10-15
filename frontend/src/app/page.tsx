@@ -103,6 +103,12 @@ export default function Home() {
     setLang(getInitialLang());
   }, []);
 
+  useEffect(() => {
+    // Next 的 metadata 是静态 SSR，读不到本地语言，这里让标题与 <html lang> 跟随语言切换
+    document.title = t.appTitle;
+    document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  }, [lang, t.appTitle]);
+
   const [activeTab, setActiveTab] = useState<TabKey>("home");
   const [stations, setStations] = useState<Station[]>(() => {
     if (typeof window === "undefined") {
@@ -741,7 +747,7 @@ function HomeView({
         <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[32px] border border-slate-200 bg-white shadow-sm">
           <MapPin size={32} className="text-emerald-200" />
         </div>
-        <h3 className="text-lg font-bold text-slate-700">暂无收藏站点</h3>
+        <h3 className="text-lg font-bold text-slate-700">{t.noStations}</h3>
       </div>
     );
   }
@@ -974,7 +980,12 @@ function EnhancedBusCard({
   const nextNextTripLabel = t?.nextNextTrip ?? "下下趟";
   const gps = t?.gpsTime ?? "GPS定位";
   const estimatedTime = t?.estimatedTime ?? "预计到达";
-  const servicePaused = "服务暂停";
+  const minuteUnit = t?.minuteUnit ?? "分";
+  const secondUnit = t?.secondUnit ?? "秒";
+  const minuteShort = t?.minuteShort ?? "分";
+  const secondShort = t?.secondShort ?? "秒";
+  const servicePaused = t?.servicePaused ?? "服务暂停";
+  const noRealtimeData = t?.noRealtimeData ?? "暂无实时到站数据";
 
   // monitored = 0 表示该班次为预测值（非 GPS 实时定位）
   const mainTripLabel = arrival?.nextMonitored === 0 ? estimatedTime : gps;
@@ -1082,7 +1093,7 @@ function EnhancedBusCard({
             </div>
             <p className="relative text-base font-black tracking-wide text-amber-700">{servicePaused}</p>
             <p className="relative mt-1 text-xs font-bold tracking-wide text-amber-500/90">
-              暂无实时到站数据
+              {noRealtimeData}
             </p>
           </div>
         ) : (
@@ -1100,11 +1111,11 @@ function EnhancedBusCard({
               <span className="text-4xl font-black tracking-tighter text-slate-900">
                 {mainTrip.min}
               </span>
-              <span className="mr-2 text-sm font-bold text-slate-800">分</span>
+              <span className="mr-2 text-sm font-bold text-slate-800">{minuteUnit}</span>
               <span className="text-4xl font-black tracking-tighter text-slate-900">
                 {mainTrip.sec}
               </span>
-              <span className="text-sm font-bold text-slate-800">秒</span>
+              <span className="text-sm font-bold text-slate-800">{secondUnit}</span>
             </div>
           </div>
 
@@ -1152,7 +1163,9 @@ function EnhancedBusCard({
               )}
             </span>
             <span className="text-center font-mono text-sm font-black tracking-tight text-slate-700">
-              {nextTrip.min}m {nextTrip.sec}s
+              {nextTrip.min}
+              {minuteShort} {nextTrip.sec}
+              {secondShort}
             </span>
             <div className="flex items-center justify-end gap-1.5">
               <LoadBadge load={arrival?.next2Load} t={t} />
@@ -1170,7 +1183,9 @@ function EnhancedBusCard({
               )}
             </span>
             <span className="text-center font-mono text-sm font-black tracking-tight text-slate-700">
-              {lastTrip.min}m {lastTrip.sec}s
+              {lastTrip.min}
+              {minuteShort} {lastTrip.sec}
+              {secondShort}
             </span>
             <div className="flex items-center justify-end gap-1.5">
               <LoadBadge load={arrival?.next3Load} t={t} />
