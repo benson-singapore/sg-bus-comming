@@ -5,10 +5,18 @@ export const runtime = "edge";
 type ArrivelahETA = {
   time?: string;
   duration_ms?: number;
+  // SD = 单层, DD = 双层, BD = 铰接式
+  type?: string;
+  // SEA = 有座位, SDA = 可站立, LSD = 站立空间有限
+  load?: string;
+  // WAB = 无障碍
+  feature?: string;
+  monitored?: number;
 };
 
 type ArrivelahService = {
   no: string;
+  operator?: string;
   next?: ArrivelahETA;
   next2?: ArrivelahETA;
   next3?: ArrivelahETA;
@@ -65,15 +73,28 @@ async function buildStationResponse(stationCode: string) {
 
       return {
         route: service.no,
+        operator: service.operator ?? "",
         nextMinutes: next.min,
         nextSeconds: next.sec,
         nextArrival: formatTime(service.next?.time),
+        nextType: service.next?.type ?? "",
+        nextLoad: service.next?.load ?? "",
+        nextFeature: service.next?.feature ?? "",
+        nextMonitored: service.next?.monitored ?? 0,
         next2Minutes: next2.min,
         next2Seconds: next2.sec,
         next2Arrival: formatTime(service.next2?.time),
+        next2Type: service.next2?.type ?? "",
+        next2Load: service.next2?.load ?? "",
+        next2Feature: service.next2?.feature ?? "",
+        next2Monitored: service.next2?.monitored ?? 0,
         next3Minutes: next3.min,
         next3Seconds: next3.sec,
         next3Arrival: formatTime(service.next3?.time),
+        next3Type: service.next3?.type ?? "",
+        next3Load: service.next3?.load ?? "",
+        next3Feature: service.next3?.feature ?? "",
+        next3Monitored: service.next3?.monitored ?? 0,
       };
     }) ?? [];
 

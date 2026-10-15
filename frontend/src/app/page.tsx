@@ -37,15 +37,28 @@ type Station = {
 
 type BusCardData = {
   route: string;
+  operator?: string;
   nextMinutes?: number;
   nextSeconds?: number;
   nextArrival?: string;
+  nextType?: string;
+  nextLoad?: string;
+  nextFeature?: string;
+  nextMonitored?: number;
   next2Minutes?: number;
   next2Seconds?: number;
   next2Arrival?: string;
+  next2Type?: string;
+  next2Load?: string;
+  next2Feature?: string;
+  next2Monitored?: number;
   next3Minutes?: number;
   next3Seconds?: number;
   next3Arrival?: string;
+  next3Type?: string;
+  next3Load?: string;
+  next3Feature?: string;
+  next3Monitored?: number;
 };
 
 type QueryResult = {
@@ -762,6 +775,159 @@ function HomeView({
   );
 }
 
+type BusTypeCode = "SD" | "DD" | "BD";
+
+// SD = 单层, DD = 双层, BD = 铰接式（bendy bus）
+const BUS_TYPE_META: Record<
+  BusTypeCode,
+  {
+    labelKey: "busTypeSD" | "busTypeDD" | "busTypeBD";
+    accent: string;
+    chip: string;
+  }
+> = {
+  SD: {
+    labelKey: "busTypeSD",
+    accent: "text-emerald-600",
+    chip: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  },
+  DD: {
+    labelKey: "busTypeDD",
+    accent: "text-indigo-600",
+    chip: "border-indigo-200 bg-indigo-50 text-indigo-700",
+  },
+  BD: {
+    labelKey: "busTypeBD",
+    accent: "text-amber-600",
+    chip: "border-amber-200 bg-amber-50 text-amber-700",
+  },
+};
+
+const LOAD_META: Record<string, { labelKey: "loadSeats" | "loadStanding" | "loadLimited"; dot: string }> = {
+  SEA: { labelKey: "loadSeats", dot: "bg-emerald-500" },
+  SDA: { labelKey: "loadStanding", dot: "bg-amber-500" },
+  LSD: { labelKey: "loadLimited", dot: "bg-rose-500" },
+};
+
+function isBusTypeCode(value?: string): value is BusTypeCode {
+  return value === "SD" || value === "DD" || value === "BD";
+}
+
+// 三种车型使用完全不同的轮廓，保证在 12px 也能一眼分辨：
+// 单层 = 低矮一厢、一排车窗；双层 = 高车身、上下两排车窗 + 中间隔层线；铰接 = 前后两节车体 + 中间风琴接头 + 三根车轴
+function BusTypeIcon({ type, size = 16, className = "" }: { type?: string; size?: number; className?: string }) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    className,
+    "aria-hidden": true,
+  };
+  // 车窗用实心填充，与小尺寸下的轮廓线形成对比
+  const glass = { fill: "currentColor", stroke: "none" };
+
+  if (type === "DD") {
+    return (
+      <svg {...common}>
+        {/* 双层车体：更高的车身 + 上下两排车窗 */}
+        <rect x="3" y="2.6" width="18" height="15" rx="2.8" />
+        <rect x="5.6" y="4.7" width="3.7" height="3.1" rx="0.9" {...glass} />
+        <rect x="10.1" y="4.7" width="3.7" height="3.1" rx="0.9" {...glass} />
+        <rect x="14.6" y="4.7" width="3.7" height="3.1" rx="0.9" {...glass} />
+        <rect x="5.6" y="12.4" width="3.7" height="3.1" rx="0.9" {...glass} />
+        <rect x="10.1" y="12.4" width="3.7" height="3.1" rx="0.9" {...glass} />
+        <rect x="14.6" y="12.4" width="3.7" height="3.1" rx="0.9" {...glass} />
+        <path d="M3 10.15h18" />
+        <circle cx="7.6" cy="19.3" r="1.8" />
+        <circle cx="16.4" cy="19.3" r="1.8" />
+      </svg>
+    );
+  }
+
+  if (type === "BD") {
+    return (
+      <svg {...common}>
+        {/* 铰接车体：前后两节 + 中间风琴接头 */}
+        <rect x="1.6" y="6.9" width="7.6" height="10.7" rx="2.6" />
+        <rect x="14.8" y="6.9" width="7.6" height="10.7" rx="2.6" />
+        <path d="M10.6 9v6.6" />
+        <path d="M12 8.4v7.8" />
+        <path d="M13.4 9v6.6" />
+        <rect x="3" y="9.4" width="2.2" height="3.4" rx="0.8" {...glass} />
+        <rect x="5.6" y="9.4" width="2.2" height="3.4" rx="0.8" {...glass} />
+        <rect x="16.2" y="9.4" width="2.2" height="3.4" rx="0.8" {...glass} />
+        <rect x="18.8" y="9.4" width="2.2" height="3.4" rx="0.8" {...glass} />
+        <circle cx="4.4" cy="19.3" r="1.8" />
+        <circle cx="12" cy="19.3" r="1.8" />
+        <circle cx="19.6" cy="19.3" r="1.8" />
+      </svg>
+    );
+  }
+
+  if (type === "SD") {
+    return (
+      <svg {...common}>
+        {/* 单层车体：低矮的一厢车身 + 一排车窗 */}
+        <rect x="2.6" y="6.9" width="18.8" height="10.7" rx="2.8" />
+        <rect x="5.2" y="9" width="3.9" height="3.4" rx="0.9" {...glass} />
+        <rect x="10" y="9" width="3.9" height="3.4" rx="0.9" {...glass} />
+        <rect x="14.8" y="9" width="3.9" height="3.4" rx="0.9" {...glass} />
+        <circle cx="7.4" cy="19.3" r="1.8" />
+        <circle cx="16.6" cy="19.3" r="1.8" />
+      </svg>
+    );
+  }
+
+  return <Bus size={size} className={className} />;
+}
+
+function BusTypeBadge({
+  type,
+  t,
+  size = "sm",
+}: {
+  type?: string;
+  t?: I18nText;
+  size?: "sm" | "md";
+}) {
+  if (!isBusTypeCode(type)) return null;
+  const meta = BUS_TYPE_META[type];
+  const label = t ? t[meta.labelKey] : meta.labelKey;
+  const dims = size === "md" ? "px-2.5 py-1 text-[11px] gap-1.5" : "px-2 py-0.5 text-[10px] gap-1";
+  const iconSize = size === "md" ? 15 : 12;
+
+  return (
+    <span
+      title={label}
+      className={`inline-flex shrink-0 items-center rounded-lg border font-black tracking-wide ${dims} ${meta.chip}`}
+    >
+      <BusTypeIcon type={type} size={iconSize} />
+      {label}
+    </span>
+  );
+}
+
+function LoadBadge({ load, t }: { load?: string; t?: I18nText }) {
+  const meta = load ? LOAD_META[load.toUpperCase()] : undefined;
+  if (!meta) return null;
+  const label = t ? t[meta.labelKey] : meta.labelKey;
+
+  // 仅用颜色圆点表示车厢拥挤度（悬停可查看文字说明），避免窄屏溢出
+  return (
+    <span
+      role="img"
+      aria-label={label}
+      title={label}
+      className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta.dot}`}
+    />
+  );
+}
+
 function EnhancedBusCard({
   route,
   stationName,
@@ -804,7 +970,17 @@ function EnhancedBusCard({
   const nextTripLabel = t?.nextTrip ?? "下一趟";
   const nextNextTripLabel = t?.nextNextTrip ?? "下下趟";
   const gps = t?.gpsTime ?? "GPS定位";
+  const estimatedTime = t?.estimatedTime ?? "预计到达";
   const servicePaused = "服务暂停";
+
+  // monitored = 0 表示该班次为预测值（非 GPS 实时定位）
+  const mainTripLabel = arrival?.nextMonitored === 0 ? estimatedTime : gps;
+
+  const asBusType = (value?: string): BusTypeCode | undefined =>
+    isBusTypeCode(value) ? value : undefined;
+  const currentBusType = asBusType(arrival?.nextType);
+  const nextBusType = asBusType(arrival?.next2Type);
+  const laterBusType = asBusType(arrival?.next3Type);
 
   const hasRealtimeData =
     arrival !== undefined &&
@@ -913,6 +1089,7 @@ function EnhancedBusCard({
               <span className="text-[10px] font-black tracking-widest text-emerald-700 uppercase">
                 {currentTrip}
               </span>
+              <BusTypeBadge type={currentBusType} t={t} size="md" />
             </div>
             <div className="flex items-baseline gap-0.5">
               <span className="text-4xl font-black tracking-tighter text-slate-900">
@@ -935,7 +1112,7 @@ function EnhancedBusCard({
               {mainTrip.status}
             </span>
             <p className="flex items-center justify-end gap-1 text-[9px] font-black text-slate-400 uppercase">
-              <MapPin size={10} className="text-rose-400" /> {gps}: {mainTrip.time}
+              <MapPin size={10} className="text-rose-400" /> {mainTripLabel}: {mainTrip.time}
             </p>
           </div>
         </div>
@@ -963,13 +1140,17 @@ function EnhancedBusCard({
 
         <div className="space-y-3 border-t border-slate-100 pt-4">
           <div className="grid grid-cols-3 items-center px-1">
-            <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+            <span className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
               {nextTripLabel}
+              {nextBusType && (
+                <BusTypeIcon type={nextBusType} size={14} className={BUS_TYPE_META[nextBusType].accent} />
+              )}
             </span>
             <span className="text-center font-mono text-sm font-black tracking-tight text-slate-700">
               {nextTrip.min}m {nextTrip.sec}s
             </span>
             <div className="flex items-center justify-end gap-1.5">
+              <LoadBadge load={arrival?.next2Load} t={t} />
               <Clock size={10} className="text-slate-300" />
               <span className="rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1 text-[10px] font-black text-slate-500">
                 {nextTrip.arrival}
@@ -977,13 +1158,17 @@ function EnhancedBusCard({
             </div>
           </div>
           <div className="grid grid-cols-3 items-center px-1">
-            <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+            <span className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
               {nextNextTripLabel}
+              {laterBusType && (
+                <BusTypeIcon type={laterBusType} size={14} className={BUS_TYPE_META[laterBusType].accent} />
+              )}
             </span>
             <span className="text-center font-mono text-sm font-black tracking-tight text-slate-700">
               {lastTrip.min}m {lastTrip.sec}s
             </span>
             <div className="flex items-center justify-end gap-1.5">
+              <LoadBadge load={arrival?.next3Load} t={t} />
               <Clock size={10} className="text-slate-300" />
               <span className="rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1 text-[10px] font-black text-slate-500">
                 {lastTrip.arrival}
