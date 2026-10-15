@@ -793,13 +793,13 @@ const BUS_TYPE_META: Record<
   },
   DD: {
     labelKey: "busTypeDD",
-    accent: "text-indigo-600",
-    chip: "border-indigo-200 bg-indigo-50 text-indigo-700",
+    accent: "text-orange-600",
+    chip: "border-orange-200 bg-orange-50 text-orange-700",
   },
   BD: {
     labelKey: "busTypeBD",
-    accent: "text-amber-600",
-    chip: "border-amber-200 bg-amber-50 text-amber-700",
+    accent: "text-red-600",
+    chip: "border-red-200 bg-red-50 text-red-700",
   },
 };
 
