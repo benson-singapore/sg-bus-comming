@@ -811,9 +811,10 @@ const BUS_TYPE_META: Record<
 };
 
 const LOAD_META: Record<string, { labelKey: "loadSeats" | "loadStanding" | "loadLimited"; dot: string }> = {
+  // 有座位 = 绿, 有站位 = 橙, 站位有限 = 红
   SEA: { labelKey: "loadSeats", dot: "bg-emerald-500" },
-  SDA: { labelKey: "loadStanding", dot: "bg-amber-500" },
-  LSD: { labelKey: "loadLimited", dot: "bg-rose-500" },
+  SDA: { labelKey: "loadStanding", dot: "bg-orange-500" },
+  LSD: { labelKey: "loadLimited", dot: "bg-red-500" },
 };
 
 function isBusTypeCode(value?: string): value is BusTypeCode {
@@ -919,19 +920,29 @@ function BusTypeBadge({
   );
 }
 
-function LoadBadge({ load, t }: { load?: string; t?: I18nText }) {
+function LoadBadge({
+  load,
+  t,
+  showLabel = false,
+}: {
+  load?: string;
+  t?: I18nText;
+  showLabel?: boolean;
+}) {
   const meta = load ? LOAD_META[load.toUpperCase()] : undefined;
   if (!meta) return null;
   const label = t ? t[meta.labelKey] : meta.labelKey;
 
-  // 仅用颜色圆点表示车厢拥挤度（悬停可查看文字说明），避免窄屏溢出
   return (
     <span
       role="img"
       aria-label={label}
       title={label}
-      className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta.dot}`}
-    />
+      className="inline-flex shrink-0 items-center gap-1 text-[10px] font-black whitespace-nowrap text-slate-400"
+    >
+      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta.dot}`} />
+      {showLabel && <span className="hidden min-[375px]:inline">{label}</span>}
+    </span>
   );
 }
 
@@ -1100,12 +1111,12 @@ function EnhancedBusCard({
           <>
         <div className="mb-4 flex items-end justify-between">
           <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-sm" />
+            <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-[10px] font-black tracking-widest text-emerald-700 uppercase">
                 {currentTrip}
               </span>
               <BusTypeBadge type={currentBusType} t={t} size="md" />
+              <LoadBadge load={arrival?.nextLoad} t={t} showLabel />
             </div>
             <div className="flex items-baseline gap-0.5">
               <span className="text-4xl font-black tracking-tighter text-slate-900">
