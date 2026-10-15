@@ -2,7 +2,7 @@
 @import "nprogress/nprogress.css";
 
 :root {
-  --background: #e2e8f0;
+  --background: #f1f5f9;
   --foreground: #171717;
 }
 
@@ -15,7 +15,9 @@
 
 html,
 body {
-  background: #e2e8f0;
+  /* 与主页背景（slate-100）保持一致：iOS 独立窗口（PWA / WebClip）下状态栏会取
+     html/body 的背景色，这里若用更深的颜色就会出现状态栏与页面背景的色差 */
+  background: #f1f5f9;
   min-height: 100%;
 }
 
