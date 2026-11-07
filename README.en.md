@@ -1,4 +1,8 @@
-# SG Bus Comming (巴士来了)
+# SG Bus Arrival（巴士来了）
+
+<p align="center"><strong>Live bus arrival times in Singapore · Save stops and routes · Install as a PWA</strong></p>
+
+<p align="center"><a href="https://bus.skycore.cloud/">Open the app</a> · <a href="https://sg-bus-comming-web.pages.dev/">Product overview</a> · <a href="./README.md">简体中文</a></p>
 
 A real-time bus arrival information tool for Singapore commuters. Search for bus arrival times by station code, save frequently used bus stops and routes, and install the app on your phone's home screen for convenient daily use.
 
