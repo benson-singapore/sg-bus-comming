@@ -1,6 +1,8 @@
-# SG Bus Comming（巴士来了）
+# SG Bus Arrival · 巴士来了
 
-**中文** · [English](./README.en.md)
+<p align="center"><strong>新加坡实时公交到站查询 · 收藏站点与线路 · 安装为 PWA，通勤随手用</strong></p>
+
+<p align="center"><a href="https://bus.skycore.cloud/">立即使用</a> · <a href="https://sg-bus-comming-web.pages.dev/">产品介绍</a> · <a href="./README.en.md">English</a></p>
 
 面向新加坡公交用户的实时到站查询工具。你可以按站点编号查询公交到站时间，收藏常用站点和关注线路，并将应用安装到手机主屏幕，方便日常通勤使用。
 
